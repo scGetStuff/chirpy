@@ -16,5 +16,7 @@ func doStuff() {
 	server.Addr = ":8080"
 	server.Handler = stuff
 
+	stuff.Handle("/", http.FileServer(http.Dir("./pages")))
+
 	server.ListenAndServe()
 }
