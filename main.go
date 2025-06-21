@@ -11,12 +11,12 @@ func main() {
 }
 
 func doStuff() {
-	stuff := http.NewServeMux()
-	server := http.Server{}
+	mux := http.NewServeMux()
+	server := &http.Server{}
 	server.Addr = ":8080"
-	server.Handler = stuff
+	server.Handler = mux
 
-	stuff.Handle("/", http.FileServer(http.Dir("./pages")))
+	mux.Handle("/", http.FileServer(http.Dir(".")))
 
 	server.ListenAndServe()
 }
