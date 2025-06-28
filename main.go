@@ -33,9 +33,9 @@ func doStuff() {
 			incHitCount(http.FileServer(http.Dir(rootPath))),
 		),
 	)
-	mux.HandleFunc("/healthz", handlers.Healthz)
-	mux.HandleFunc("/metrics", handlers.Metrics)
-	mux.HandleFunc("/reset", handlers.Reset)
+	mux.HandleFunc("GET /healthz", handlers.Healthz)
+	mux.HandleFunc("GET /metrics", handlers.Metrics)
+	mux.HandleFunc("POST /reset", handlers.Reset)
 
 	log.Printf("Serving on port: %s\n", port)
 	log.Fatal(srv.ListenAndServe())
