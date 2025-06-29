@@ -33,9 +33,16 @@ func doStuff() {
 			incHitCount(http.FileServer(http.Dir(rootPath))),
 		),
 	)
-	mux.HandleFunc("GET /healthz", handlers.Healthz)
-	mux.HandleFunc("GET /metrics", handlers.Metrics)
-	mux.HandleFunc("POST /reset", handlers.Reset)
+	mux.HandleFunc("GET /api/healthz", handlers.Healthz)
+
+	// CH3 L4
+	// mux.HandleFunc("GET /api/metrics", handlers.Metrics)
+	mux.HandleFunc("GET /admin/metrics", handlers.Metrics)
+	// mux.HandleFunc("POST /api/reset", handlers.Reset)
+	mux.HandleFunc("POST /admin/reset", handlers.Reset)
+
+	// CH4 L2
+	mux.HandleFunc("POST /api/validate_chirp", handlers.Validate_chirp)
 
 	log.Printf("Serving on port: %s\n", port)
 	log.Fatal(srv.ListenAndServe())
