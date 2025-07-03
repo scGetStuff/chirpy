@@ -1,20 +1,59 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 
 	cfg "github.com/scGetStuff/chirpy/internal/config"
+	"github.com/scGetStuff/chirpy/internal/database"
 	"github.com/scGetStuff/chirpy/internal/handlers"
 )
 
 func main() {
 	fmt.Println("chirpy main()")
-	doStuff()
+
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	fmt.Printf("ENV: %s\n\n", dbURL)
+
+	// doStuff()
+	testDB(dbURL)
+}
+
+func testDB(dbURL string) {
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("open DB error")
+	}
+
+	dbQueries := database.New(db)
+	_, err = dbQueries.CreateUser(context.Background(), "test@test.com")
+	if err != nil {
+		fmt.Printf("users failed: %w", err)
+		log.Fatal("insert error")
+
+	}
+
+	users, err := dbQueries.GetUsers(context.Background())
+	if err != nil {
+		fmt.Printf("users failed: %w", err)
+		log.Fatal("select error")
+	}
+
+	fmt.Print(users)
 }
 
 func doStuff() {
+	godotenv.Load()
+
 	const rootPath = "."
 	const rootPrefix = "/app"
 	const port = "8080"
