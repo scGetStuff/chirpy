@@ -40,8 +40,10 @@ func doStuff() {
 
 	mux.HandleFunc("GET /api/healthz", handlers.Healthz)
 	mux.HandleFunc("POST /api/users", handlers.Users)
+	mux.HandleFunc("GET /api/users", handlers.GetUsers)
 	mux.HandleFunc("POST /api/chirps", handlers.Chirps)
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", handlers.GetChirp)
 
 	mux.HandleFunc("GET /admin/metrics", handlers.Metrics)
 	mux.HandleFunc("POST /admin/reset", handlers.Reset)

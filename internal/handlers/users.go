@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	cfg "github.com/scGetStuff/chirpy/internal/config"
@@ -31,6 +32,23 @@ func Users(res http.ResponseWriter, req *http.Request) {
 
 	s := userJSON(&user)
 	returnJSON(res, 201, s)
+}
+
+func GetUsers(res http.ResponseWriter, req *http.Request) {
+	users, err := cfg.DBQueries.GetUsers(req.Context())
+	if err != nil {
+		s := fmt.Sprintf("`GetUsers()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSON(res, 500, s)
+	}
+
+	stuff := []string{}
+	for _, user := range users {
+		s := userJSON(&user)
+		stuff = append(stuff, s)
+	}
+	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
+	returnJSON(res, 200, s)
 }
 
 // TODO: this is supposed to do marshalling stuff to map field names

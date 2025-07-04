@@ -56,7 +56,7 @@ func Chirps(res http.ResponseWriter, req *http.Request) {
 func GetChirps(res http.ResponseWriter, req *http.Request) {
 	chirps, err := cfg.DBQueries.GetChirps(req.Context())
 	if err != nil {
-		s := fmt.Sprintf("`CreateChirps()` failed:\n%v", err)
+		s := fmt.Sprintf("`GetChirps()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSON(res, 500, s)
 	}
@@ -67,6 +67,35 @@ func GetChirps(res http.ResponseWriter, req *http.Request) {
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
+	returnJSON(res, 200, s)
+}
+
+func GetChirp(res http.ResponseWriter, req *http.Request) {
+
+	chirpID := req.PathValue("chirpID")
+	// fmt.Printf("\nchirpID: %v\n", chirpID)
+
+	id, err := uuid.Parse(chirpID)
+	if err != nil {
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "bad chirp ID")
+		returnJSON(res, 500, s)
+		return
+	}
+
+	chirp, err := cfg.DBQueries.GetChirp(req.Context(), id)
+	if err != nil {
+		// TODO: is there a way to do this that does not suck
+		if err.Error() == "sql: no rows in result set" {
+			returnJSON(res, 404, "")
+			return
+		}
+
+		s := fmt.Sprintf("`GetChirp()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSON(res, 500, s)
+	}
+
+	s := chirpJSON(&chirp)
 	returnJSON(res, 200, s)
 }
 
