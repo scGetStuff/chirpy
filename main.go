@@ -15,9 +15,9 @@ import (
 func main() {
 	fmt.Println("chirpy main()")
 	cfg.DBinit()
-	cfg.TestDB()
+	// cfg.TestDB()
 
-	// doStuff()
+	doStuff()
 }
 
 func doStuff() {
@@ -37,11 +37,13 @@ func doStuff() {
 			incHitCount(http.FileServer(http.Dir(rootPath))),
 		),
 	)
+
 	mux.HandleFunc("GET /api/healthz", handlers.Healthz)
+	mux.HandleFunc("POST /api/validate_chirp", handlers.Validate_chirp)
+	mux.HandleFunc("POST /api/users", handlers.Users)
 
 	mux.HandleFunc("GET /admin/metrics", handlers.Metrics)
 	mux.HandleFunc("POST /admin/reset", handlers.Reset)
-	mux.HandleFunc("POST /api/validate_chirp", handlers.Validate_chirp)
 
 	log.Printf("Serving on port: %s\n", port)
 	log.Fatal(srv.ListenAndServe())

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync/atomic"
 
 	"github.com/joho/godotenv"
@@ -20,6 +21,7 @@ import (
 
 var FileServerHits = atomic.Int32{}
 var DBQueries *database.Queries
+var IsDev = false
 
 func DBinit() {
 	err := godotenv.Load()
@@ -27,10 +29,15 @@ func DBinit() {
 		log.Fatalf("error in `godotenv.Load()`:\n%v", err)
 	}
 
+	s := strings.ToLower(os.Getenv("PLATFORM"))
+	fmt.Printf("ENV: PLATFORM: %v\n", s)
+	IsDev = (s == "dev")
+	fmt.Printf("IsDev: %v\n", IsDev)
+
 	dbURL := os.Getenv("DB_URL")
-	fmt.Printf("ENV: %s\n\n", dbURL)
+	fmt.Printf("ENV: DB_URL: %s\n", dbURL)
 	if dbURL == "" {
-		log.Fatalf("error getting DB_URL from enviornment\n")
+		log.Fatal("error getting DB_URL from enviornment\n")
 	}
 
 	db, err := sql.Open("postgres", dbURL)
@@ -40,22 +47,19 @@ func DBinit() {
 
 	DBQueries = database.New(db)
 	if DBQueries == nil {
-		log.Fatalf("this is not supposed to happen\n")
+		log.Fatalf("`DBQueries` bad stuff happened\n")
 	}
 }
 
 func TestDB() {
 	_, err := DBQueries.CreateUser(context.Background(), "test@test.com")
 	if err != nil {
-		fmt.Printf("`CreateUser()` failed: \n%v", err)
-		log.Fatal("insert error")
-
+		log.Fatalf("`CreateUser()` failed:\n%v", err)
 	}
 
 	users, err := DBQueries.GetUsers(context.Background())
 	if err != nil {
-		fmt.Printf("`GetUsers()` failed: \n%v", err)
-		log.Fatal("select error")
+		log.Fatalf("`GetUsers()` failed:\n%v", err)
 	}
 
 	for _, user := range users {
