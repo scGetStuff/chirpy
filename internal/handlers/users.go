@@ -50,8 +50,8 @@ func userJSON(user *database.User) string {
 
 	s := fmt.Sprintf("{%s,%s,%s,%s}", id, c, u, e)
 
-	// f := fmt.Sprintf("{\n\t%s,\n\t%s,\n\t%s,\n\t%s\n}\n", id, c, u, e)
-	// fmt.Println(f)
+	// x := fmt.Sprintf("{\n\t%s,\n\t%s,\n\t%s,\n\t%s\n}\n", id, c, u, e)
+	// fmt.Println(x)
 
 	return s
 }

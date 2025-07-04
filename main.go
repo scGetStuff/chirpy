@@ -39,8 +39,9 @@ func doStuff() {
 	)
 
 	mux.HandleFunc("GET /api/healthz", handlers.Healthz)
-	mux.HandleFunc("POST /api/validate_chirp", handlers.Validate_chirp)
 	mux.HandleFunc("POST /api/users", handlers.Users)
+	mux.HandleFunc("POST /api/chirps", handlers.Chirps)
+	mux.HandleFunc("GET /api/chirps", handlers.GetChirps)
 
 	mux.HandleFunc("GET /admin/metrics", handlers.Metrics)
 	mux.HandleFunc("POST /admin/reset", handlers.Reset)
