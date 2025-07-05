@@ -39,10 +39,12 @@ func Chirps(res http.ResponseWriter, req *http.Request) {
 	}
 	c.Body = censor(c.Body)
 
-	chirp, err := cfg.DBQueries.CreateChirps(req.Context(), database.CreateChirpsParams{
-		Body:   c.Body,
-		UserID: userID,
-	})
+	chirp, err := cfg.DBQueries.CreateChirps(req.Context(),
+		database.CreateChirpsParams{
+			Body:   c.Body,
+			UserID: userID,
+		},
+	)
 	if err != nil {
 		s := fmt.Sprintf("`CreateChirps()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)

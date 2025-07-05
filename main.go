@@ -44,6 +44,7 @@ func doStuff() {
 	mux.HandleFunc("POST /api/chirps", handlers.Chirps)
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", handlers.GetChirp)
+	mux.HandleFunc("POST /api/login", handlers.Login)
 
 	mux.HandleFunc("GET /admin/metrics", handlers.Metrics)
 	mux.HandleFunc("POST /admin/reset", handlers.Reset)

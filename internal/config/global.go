@@ -1,7 +1,6 @@
 package config
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -48,22 +47,6 @@ func DBinit() {
 	DBQueries = database.New(db)
 	if DBQueries == nil {
 		log.Fatalf("`DBQueries` bad stuff happened\n")
-	}
-}
-
-func TestDB() {
-	_, err := DBQueries.CreateUser(context.Background(), "test@test.com")
-	if err != nil {
-		log.Fatalf("`CreateUser()` failed:\n%v", err)
-	}
-
-	users, err := DBQueries.GetUsers(context.Background())
-	if err != nil {
-		log.Fatalf("`GetUsers()` failed:\n%v", err)
-	}
-
-	for _, user := range users {
-		printUser(user)
 	}
 }
 

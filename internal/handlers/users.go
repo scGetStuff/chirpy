@@ -6,36 +6,52 @@ import (
 	"strings"
 	"time"
 
+	"github.com/scGetStuff/chirpy/internal/auth"
 	cfg "github.com/scGetStuff/chirpy/internal/config"
 	"github.com/scGetStuff/chirpy/internal/database"
 )
 
 func Users(res http.ResponseWriter, req *http.Request) {
-	type email struct {
-		Email string `json:"email"`
+	type newUser struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 
-	e := email{}
-	err := decodeJSON(&e, req)
+	reqUser := newUser{}
+	err := decodeJSON(&reqUser, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
 		returnJSON(res, 500, s)
 		return
 	}
 
-	user, err := cfg.DBQueries.CreateUser(req.Context(), e.Email)
+	hashPass, err := auth.HashPassword(reqUser.Password)
+	if err != nil {
+		s := fmt.Sprintf("`HashPassword()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSON(res, 500, s)
+		return
+	}
+
+	userRec, err := cfg.DBQueries.CreateUser(req.Context(),
+		database.CreateUserParams{
+			Email:          reqUser.Email,
+			HashedPassword: hashPass,
+		},
+	)
 	if err != nil {
 		s := fmt.Sprintf("`CreateUser()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSON(res, 500, s)
+		return
 	}
 
-	s := userJSON(&user)
+	s := userJSON(&userRec)
 	returnJSON(res, 201, s)
 }
 
 func GetUsers(res http.ResponseWriter, req *http.Request) {
-	users, err := cfg.DBQueries.GetUsers(req.Context())
+	userRecs, err := cfg.DBQueries.GetUsers(req.Context())
 	if err != nil {
 		s := fmt.Sprintf("`GetUsers()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
@@ -43,8 +59,8 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 	}
 
 	stuff := []string{}
-	for _, user := range users {
-		s := userJSON(&user)
+	for _, userRec := range userRecs {
+		s := userJSON(&userRec)
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
