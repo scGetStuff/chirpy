@@ -67,6 +67,62 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 	returnJSON(res, http.StatusOK, s)
 }
 
+func PutUser(res http.ResponseWriter, req *http.Request) {
+	type updateUser struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
+
+	reqUser := updateUser{}
+	err := decodeJSON(&reqUser, req)
+	if err != nil {
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
+		returnJSON(res, http.StatusInternalServerError, s)
+		return
+	}
+
+	hashPass, err := auth.HashPassword(reqUser.Password)
+	if err != nil {
+		s := fmt.Sprintf("`HashPassword()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSON(res, http.StatusInternalServerError, s)
+		return
+	}
+
+	accessToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		fmt.Printf("`GetBearerToken()` failed\n%v", err)
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
+		returnJSON(res, http.StatusUnauthorized, s)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(accessToken, cfg.Secret)
+	if err != nil {
+		fmt.Println(err)
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
+		returnJSON(res, http.StatusUnauthorized, s)
+		return
+	}
+
+	userRec, err := cfg.DBQueries.UpdateUser(req.Context(),
+		database.UpdateUserParams{
+			ID:             userID,
+			Email:          reqUser.Email,
+			HashedPassword: hashPass,
+		},
+	)
+	if err != nil {
+		s := fmt.Sprintf("`UpdateUser()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSON(res, http.StatusInternalServerError, s)
+		return
+	}
+
+	s := userJSON(&userRec, "", "")
+	returnJSON(res, http.StatusOK, s)
+}
+
 // TODO: this is supposed to do marshalling stuff to map field names
 // first pass just strings to make it work
 func userJSON(user *database.User, token string, refresh string) string {
