@@ -39,7 +39,7 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	expirationTime := time.Hour
-	tokenAuth, err := auth.MakeJWT(userRec.ID, cfg.Secret, expirationTime)
+	tokenAccess, err := auth.MakeJWT(userRec.ID, cfg.Secret, expirationTime)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "'MakeJWT()' failed")
 		returnJSON(res, http.StatusInternalServerError, s)
@@ -56,10 +56,10 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`CreateRefreshToken()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSON(res, http.StatusInternalServerError, s)
 		return
 	}
 
-	s := userJSON(&userRec, tokenAuth, tokenRefresh)
+	s := userJSON(&userRec, tokenAccess, tokenRefresh)
 	returnJSON(res, http.StatusOK, s)
 }

@@ -18,7 +18,7 @@ func Refresh(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Printf("`GetBearerToken()` failed\n%v", err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSON(res, http.StatusBadRequest, s)
 		return
 	}
 
@@ -37,14 +37,14 @@ func Refresh(res http.ResponseWriter, req *http.Request) {
 	}
 
 	expirationTime := time.Hour
-	tokenAuth, err := auth.MakeJWT(userID, cfg.Secret, expirationTime)
+	tokenAccess, err := auth.MakeJWT(userID, cfg.Secret, expirationTime)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "'MakeJWT()' failed")
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSON(res, http.StatusUnauthorized, s)
 		return
 	}
 
-	s := fmt.Sprintf(`{"%s": "%s"}`, "token", tokenAuth)
+	s := fmt.Sprintf(`{"%s": "%s"}`, "token", tokenAccess)
 	returnJSON(res, http.StatusOK, s)
 }
 
@@ -77,7 +77,7 @@ func Revoke(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Printf("`GetBearerToken()` failed\n%v", err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSON(res, http.StatusBadRequest, s)
 		return
 	}
 
