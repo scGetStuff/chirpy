@@ -21,6 +21,8 @@ import (
 var FileServerHits = atomic.Int32{}
 var DBQueries *database.Queries
 var IsDev = false
+var Secret = ""
+var TokenLimit = 60 * 60 // 1 hour in seconds
 
 func DBinit() {
 	err := godotenv.Load()
@@ -29,9 +31,12 @@ func DBinit() {
 	}
 
 	s := strings.ToLower(os.Getenv("PLATFORM"))
-	fmt.Printf("ENV: PLATFORM: %v\n", s)
+	fmt.Printf("ENV: PLATFORM: %s\n", s)
 	IsDev = (s == "dev")
 	fmt.Printf("IsDev: %v\n", IsDev)
+
+	Secret = os.Getenv("SECRET")
+	fmt.Printf("ENV: SECRET: %s\n", Secret)
 
 	dbURL := os.Getenv("DB_URL")
 	fmt.Printf("ENV: DB_URL: %s\n", dbURL)
@@ -48,10 +53,4 @@ func DBinit() {
 	if DBQueries == nil {
 		log.Fatalf("`DBQueries` bad stuff happened\n")
 	}
-}
-
-func printUser(user database.User) {
-	fmt.Println()
-	fmt.Printf("ID:    %v\n", user.ID)
-	fmt.Printf("Email: %v\n", user.Email)
 }

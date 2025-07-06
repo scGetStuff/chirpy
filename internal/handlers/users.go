@@ -11,7 +11,7 @@ import (
 	"github.com/scGetStuff/chirpy/internal/database"
 )
 
-func Users(res http.ResponseWriter, req *http.Request) {
+func CreateUser(res http.ResponseWriter, req *http.Request) {
 	type newUser struct {
 		Password string `json:"password"`
 		Email    string `json:"email"`
@@ -21,7 +21,7 @@ func Users(res http.ResponseWriter, req *http.Request) {
 	err := decodeJSON(&reqUser, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSON(res, 500, s)
+		returnJSON(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -29,7 +29,7 @@ func Users(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`HashPassword()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, 500, s)
+		returnJSON(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -42,12 +42,12 @@ func Users(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`CreateUser()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, 500, s)
+		returnJSON(res, http.StatusInternalServerError, s)
 		return
 	}
 
-	s := userJSON(&userRec)
-	returnJSON(res, 201, s)
+	s := userJSON(&userRec, "")
+	returnJSON(res, http.StatusCreated, s)
 }
 
 func GetUsers(res http.ResponseWriter, req *http.Request) {
@@ -55,21 +55,21 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`GetUsers()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, 500, s)
+		returnJSON(res, http.StatusInternalServerError, s)
 	}
 
 	stuff := []string{}
 	for _, userRec := range userRecs {
-		s := userJSON(&userRec)
+		s := userJSON(&userRec, "")
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
-	returnJSON(res, 200, s)
+	returnJSON(res, http.StatusOK, s)
 }
 
 // TODO: this is supposed to do marshalling stuff to map field names
 // first pass just strings to make it work
-func userJSON(user *database.User) string {
+func userJSON(user *database.User, token string) string {
 	// response chokes on white space, has to be ugly JSON
 
 	id := fmt.Sprintf(`"%s": "%s"`, "id", user.ID)
@@ -82,7 +82,12 @@ func userJSON(user *database.User) string {
 
 	e := fmt.Sprintf(`"%s": "%s"`, "email", user.Email)
 
-	s := fmt.Sprintf("{%s,%s,%s,%s}", id, c, u, e)
+	t := ""
+	if token != "" {
+		t = fmt.Sprintf(`,"%s": "%s"`, "token", token)
+	}
+
+	s := fmt.Sprintf("{%s,%s,%s,%s%s}", id, c, u, e, t)
 
 	// x := fmt.Sprintf("{\n\t%s,\n\t%s,\n\t%s,\n\t%s\n}\n", id, c, u, e)
 	// fmt.Println(x)

@@ -3,6 +3,8 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -39,7 +41,9 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&claimsStruct,
-		func(token *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
+		func(token *jwt.Token) (any, error) {
+			return []byte(tokenSecret), nil
+		},
 	)
 	if err != nil {
 		return uuid.Nil, err
@@ -54,14 +58,31 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, err
 	}
-	if issuer != string("chirpy") {
+	if issuer != "chirpy" {
 		return uuid.Nil, errors.New("invalid issuer")
 	}
 
-	id, err := uuid.Parse(userIDString)
+	userID, err := uuid.Parse(userIDString)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	return id, nil
+	return userID, nil
+}
+
+func GetBearerToken(headers http.Header) (string, error) {
+
+	auth := headers.Get("Authorization")
+	if auth == "" {
+		fmt.Println("'Authorization' header does not exist")
+		return "", errors.New("'Authorization' header does not exist")
+	}
+
+	token, found := strings.CutPrefix(auth, "Bearer ")
+	if !found {
+		fmt.Println("'Bearer ' not found in 'Authorization' header")
+		return "", errors.New("'Bearer ' not found in 'Authorization' header")
+	}
+
+	return token, nil
 }
