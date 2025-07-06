@@ -42,7 +42,7 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	if reqUser.ExpireSeconds > 0 && reqUser.ExpireSeconds < cfg.TokenLimit {
 		expirationTime = time.Duration(reqUser.ExpireSeconds) * time.Second
 	}
-	fmt.Printf("\nexpirationTime: %v\n", expirationTime)
+	// fmt.Printf("\nexpirationTime: %v\n", expirationTime)
 
 	tokenString, err := auth.MakeJWT(userRec.ID, cfg.Secret, expirationTime)
 	if err != nil {
