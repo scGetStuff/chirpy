@@ -48,6 +48,10 @@ func doStuff() {
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", handlers.GetChirp)
 
+	mux.HandleFunc("POST /api/refresh", handlers.Refresh)
+	mux.HandleFunc("GET /api/refresh", handlers.GetRefresh)
+	mux.HandleFunc("POST /api/revoke", handlers.Revoke)
+
 	mux.HandleFunc("GET /admin/metrics", handlers.Metrics)
 	mux.HandleFunc("POST /admin/reset", handlers.Reset)
 

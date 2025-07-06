@@ -7,13 +7,13 @@ import (
 
 	"github.com/scGetStuff/chirpy/internal/auth"
 	cfg "github.com/scGetStuff/chirpy/internal/config"
+	"github.com/scGetStuff/chirpy/internal/database"
 )
 
 func Login(res http.ResponseWriter, req *http.Request) {
 	type loginUser struct {
-		Password      string `json:"password"`
-		Email         string `json:"email"`
-		ExpireSeconds int    `json:"expires_in_seconds"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 
 	reqUser := loginUser{}
@@ -39,18 +39,27 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	expirationTime := time.Hour
-	if reqUser.ExpireSeconds > 0 && reqUser.ExpireSeconds < cfg.TokenLimit {
-		expirationTime = time.Duration(reqUser.ExpireSeconds) * time.Second
-	}
-	// fmt.Printf("\nexpirationTime: %v\n", expirationTime)
-
-	tokenString, err := auth.MakeJWT(userRec.ID, cfg.Secret, expirationTime)
+	tokenAuth, err := auth.MakeJWT(userRec.ID, cfg.Secret, expirationTime)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "create token failed")
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "'MakeJWT()' failed")
 		returnJSON(res, http.StatusInternalServerError, s)
 		return
 	}
 
-	s := userJSON(&userRec, tokenString)
+	tokenRefresh := auth.MakeRefreshToken()
+	_, err = cfg.DBQueries.CreateRefreshToken(req.Context(),
+		database.CreateRefreshTokenParams{
+			Token:  tokenRefresh,
+			UserID: userRec.ID,
+		},
+	)
+	if err != nil {
+		s := fmt.Sprintf("`CreateRefreshToken()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSON(res, http.StatusUnauthorized, s)
+		return
+	}
+
+	s := userJSON(&userRec, tokenAuth, tokenRefresh)
 	returnJSON(res, http.StatusOK, s)
 }

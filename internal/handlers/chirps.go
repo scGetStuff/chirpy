@@ -19,7 +19,7 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 
 	tokenString, err := auth.GetBearerToken(req.Header)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("`GetBearerToken()` failed\n%v", err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
 		returnJSON(res, http.StatusUnauthorized, s)
 		return
@@ -97,7 +97,8 @@ func GetChirp(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// TODO: is there a way to do this that does not suck
 		if err.Error() == "sql: no rows in result set" {
-			returnJSON(res, http.StatusNotFound, "Couldn't get chirp")
+			s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Couldn't get chirp")
+			returnJSON(res, http.StatusNotFound, s)
 			return
 		}
 
@@ -116,19 +117,18 @@ func chirpJSON(chirp *database.Chirp) string {
 	id := fmt.Sprintf(`"%s": "%s"`, "id", chirp.ID)
 
 	date := chirp.CreatedAt.Format(time.RFC3339)
-	c := fmt.Sprintf(`"%s": "%s"`, "created_at", date)
+	cDate := fmt.Sprintf(`,"%s": "%s"`, "created_at", date)
 
 	date = chirp.UpdatedAt.Format(time.RFC3339)
-	u := fmt.Sprintf(`"%s": "%s"`, "updated_at", date)
+	uDate := fmt.Sprintf(`,"%s": "%s"`, "updated_at", date)
 
-	e := fmt.Sprintf(`"%s": "%s"`, "body", chirp.Body)
+	body := fmt.Sprintf(`,"%s": "%s"`, "body", chirp.Body)
 
-	f := fmt.Sprintf(`"%s": "%s"`, "user_id", chirp.UserID)
+	userID := fmt.Sprintf(`,"%s": "%s"`, "user_id", chirp.UserID)
 
-	s := fmt.Sprintf("{%s,%s,%s,%s,%s}", id, c, u, e, f)
+	s := fmt.Sprintf("{%s%s%s%s%s}", id, cDate, uDate, body, userID)
 
-	// x := fmt.Sprintf("{\n\t%s,\n\t%s,\n\t%s,\n\t%s,\n\t%s\n}\n", id, c, u, e, f)
-	// fmt.Println(x)
+	// fmt.Println(s)
 
 	return s
 }

@@ -46,7 +46,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s := userJSON(&userRec, "")
+	s := userJSON(&userRec, "", "")
 	returnJSON(res, http.StatusCreated, s)
 }
 
@@ -60,7 +60,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 
 	stuff := []string{}
 	for _, userRec := range userRecs {
-		s := userJSON(&userRec, "")
+		s := userJSON(&userRec, "", "")
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
@@ -69,28 +69,32 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 
 // TODO: this is supposed to do marshalling stuff to map field names
 // first pass just strings to make it work
-func userJSON(user *database.User, token string) string {
+func userJSON(user *database.User, token string, refresh string) string {
 	// response chokes on white space, has to be ugly JSON
 
 	id := fmt.Sprintf(`"%s": "%s"`, "id", user.ID)
 
 	date := user.CreatedAt.Format(time.RFC3339)
-	c := fmt.Sprintf(`"%s": "%s"`, "created_at", date)
+	cDate := fmt.Sprintf(`,"%s": "%s"`, "created_at", date)
 
 	date = user.UpdatedAt.Format(time.RFC3339)
-	u := fmt.Sprintf(`"%s": "%s"`, "updated_at", date)
+	uDate := fmt.Sprintf(`,"%s": "%s"`, "updated_at", date)
 
-	e := fmt.Sprintf(`"%s": "%s"`, "email", user.Email)
+	email := fmt.Sprintf(`,"%s": "%s"`, "email", user.Email)
 
 	t := ""
 	if token != "" {
 		t = fmt.Sprintf(`,"%s": "%s"`, "token", token)
 	}
 
-	s := fmt.Sprintf("{%s,%s,%s,%s%s}", id, c, u, e, t)
+	r := ""
+	if token != "" {
+		r = fmt.Sprintf(`,"%s": "%s"`, "refresh_token", refresh)
+	}
 
-	// x := fmt.Sprintf("{\n\t%s,\n\t%s,\n\t%s,\n\t%s\n}\n", id, c, u, e)
-	// fmt.Println(x)
+	s := fmt.Sprintf("{%s%s%s%s%s%s}", id, cDate, uDate, email, t, r)
+
+	// fmt.Println(s)
 
 	return s
 }
