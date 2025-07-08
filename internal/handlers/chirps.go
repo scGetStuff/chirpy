@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/scGetStuff/chirpy/internal/auth"
@@ -60,7 +59,7 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 		returnJSON(res, http.StatusInternalServerError, s)
 	}
 
-	s := chirpJSON(&chirp)
+	s := dbChirpToJSON(&chirp)
 	returnJSON(res, http.StatusCreated, s)
 }
 
@@ -74,7 +73,7 @@ func GetChirps(res http.ResponseWriter, req *http.Request) {
 
 	stuff := []string{}
 	for _, chirp := range chirps {
-		s := chirpJSON(&chirp)
+		s := dbChirpToJSON(&chirp)
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
@@ -107,30 +106,8 @@ func GetChirp(res http.ResponseWriter, req *http.Request) {
 		returnJSON(res, http.StatusInternalServerError, s)
 	}
 
-	s := chirpJSON(&chirp)
+	s := dbChirpToJSON(&chirp)
 	returnJSON(res, http.StatusOK, s)
-}
-
-// TODO: copy/tweak userJSON(), 2 is the limit
-func chirpJSON(chirp *database.Chirp) string {
-
-	id := fmt.Sprintf(`"%s": "%s"`, "id", chirp.ID)
-
-	date := chirp.CreatedAt.Format(time.RFC3339)
-	cDate := fmt.Sprintf(`,"%s": "%s"`, "created_at", date)
-
-	date = chirp.UpdatedAt.Format(time.RFC3339)
-	uDate := fmt.Sprintf(`,"%s": "%s"`, "updated_at", date)
-
-	body := fmt.Sprintf(`,"%s": "%s"`, "body", chirp.Body)
-
-	userID := fmt.Sprintf(`,"%s": "%s"`, "user_id", chirp.UserID)
-
-	s := fmt.Sprintf("{%s%s%s%s%s}", id, cDate, uDate, body, userID)
-
-	// fmt.Println(s)
-
-	return s
 }
 
 func censor(str string) string {

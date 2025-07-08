@@ -46,7 +46,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s := userJSON(&userRec, "", "")
+	s := dbUserToJSON(&userRec)
 	returnJSON(res, http.StatusCreated, s)
 }
 
@@ -60,7 +60,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 
 	stuff := []string{}
 	for _, userRec := range userRecs {
-		s := userJSON(&userRec, "", "")
+		s := dbUserToJSON(&userRec)
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
@@ -119,12 +119,12 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s := userJSON(&userRec, "", "")
+	s := dbUserToJSON(&userRec)
+
 	returnJSON(res, http.StatusOK, s)
 }
 
-// TODO: this is supposed to do marshalling stuff to map field names
-// first pass just strings to make it work
+// TODO: still need to replace this
 func userJSON(user *database.User, token string, refresh string) string {
 	// response chokes on white space, has to be ugly JSON
 
