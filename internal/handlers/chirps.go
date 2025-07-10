@@ -20,7 +20,7 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Printf("`GetBearerToken()` failed\n%v", err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSONRes(res, http.StatusUnauthorized, s)
 		return
 	}
 
@@ -28,7 +28,7 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSONRes(res, http.StatusUnauthorized, s)
 		return
 	}
 
@@ -36,13 +36,13 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 	err = decodeJSON(&c, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	if len(c.Body) > 140 {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Chirp is too long")
-		returnJSON(res, http.StatusBadRequest, s)
+		returnJSONRes(res, http.StatusBadRequest, s)
 		return
 	}
 	c.Body = censor(c.Body)
@@ -56,11 +56,11 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`CreateChirp()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 	}
 
 	s := dbChirpToJSON(&chirp)
-	returnJSON(res, http.StatusCreated, s)
+	returnJSONRes(res, http.StatusCreated, s)
 }
 
 func GetChirps(res http.ResponseWriter, req *http.Request) {
@@ -68,7 +68,7 @@ func GetChirps(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`GetChirps()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 	}
 
 	stuff := []string{}
@@ -77,7 +77,7 @@ func GetChirps(res http.ResponseWriter, req *http.Request) {
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
-	returnJSON(res, http.StatusOK, s)
+	returnJSONRes(res, http.StatusOK, s)
 }
 
 func GetChirp(res http.ResponseWriter, req *http.Request) {
@@ -88,7 +88,7 @@ func GetChirp(res http.ResponseWriter, req *http.Request) {
 	id, err := uuid.Parse(chirpID)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "bad chirp ID")
-		returnJSON(res, http.StatusBadRequest, s)
+		returnJSONRes(res, http.StatusBadRequest, s)
 		return
 	}
 
@@ -97,17 +97,17 @@ func GetChirp(res http.ResponseWriter, req *http.Request) {
 		// TODO: is there a way to do this that does not suck
 		if err.Error() == "sql: no rows in result set" {
 			s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Couldn't get chirp")
-			returnJSON(res, http.StatusNotFound, s)
+			returnJSONRes(res, http.StatusNotFound, s)
 			return
 		}
 
 		s := fmt.Sprintf("`GetChirp()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 	}
 
 	s := dbChirpToJSON(&chirp)
-	returnJSON(res, http.StatusOK, s)
+	returnJSONRes(res, http.StatusOK, s)
 }
 
 func censor(str string) string {

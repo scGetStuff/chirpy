@@ -20,21 +20,21 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	err := decodeJSON(&reqUser, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	userRec, err := cfg.DBQueries.GetUserByEmail(req.Context(), reqUser.Email)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSONRes(res, http.StatusUnauthorized, s)
 		return
 	}
 
 	err = auth.CheckPasswordHash(reqUser.Password, userRec.HashedPassword)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSONRes(res, http.StatusUnauthorized, s)
 		return
 	}
 
@@ -42,7 +42,7 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	tokenAccess, err := auth.MakeJWT(userRec.ID, cfg.Secret, expirationTime)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "'MakeJWT()' failed")
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -56,10 +56,10 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`CreateRefreshToken()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
-	s := userJSON(&userRec, tokenAccess, tokenRefresh)
-	returnJSON(res, http.StatusOK, s)
+	s := dbLoginToJSON(&userRec, tokenAccess, tokenRefresh)
+	returnJSONRes(res, http.StatusOK, s)
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/scGetStuff/chirpy/internal/auth"
 	cfg "github.com/scGetStuff/chirpy/internal/config"
@@ -21,7 +20,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 	err := decodeJSON(&reqUser, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -29,7 +28,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`HashPassword()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -42,12 +41,12 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`CreateUser()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	s := dbUserToJSON(&userRec)
-	returnJSON(res, http.StatusCreated, s)
+	returnJSONRes(res, http.StatusCreated, s)
 }
 
 func GetUsers(res http.ResponseWriter, req *http.Request) {
@@ -55,7 +54,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`GetUsers()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 	}
 
 	stuff := []string{}
@@ -64,7 +63,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
-	returnJSON(res, http.StatusOK, s)
+	returnJSONRes(res, http.StatusOK, s)
 }
 
 func PutUser(res http.ResponseWriter, req *http.Request) {
@@ -77,7 +76,7 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	err := decodeJSON(&reqUser, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -85,7 +84,7 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`HashPassword()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -93,7 +92,7 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Printf("`GetBearerToken()` failed\n%v", err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSONRes(res, http.StatusUnauthorized, s)
 		return
 	}
 
@@ -101,7 +100,7 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSON(res, http.StatusUnauthorized, s)
+		returnJSONRes(res, http.StatusUnauthorized, s)
 		return
 	}
 
@@ -115,42 +114,11 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`UpdateUser()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSON(res, http.StatusInternalServerError, s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	s := dbUserToJSON(&userRec)
 
-	returnJSON(res, http.StatusOK, s)
-}
-
-// TODO: still need to replace this
-func userJSON(user *database.User, token string, refresh string) string {
-	// response chokes on white space, has to be ugly JSON
-
-	id := fmt.Sprintf(`"%s": "%s"`, "id", user.ID)
-
-	date := user.CreatedAt.Format(time.RFC3339)
-	cDate := fmt.Sprintf(`,"%s": "%s"`, "created_at", date)
-
-	date = user.UpdatedAt.Format(time.RFC3339)
-	uDate := fmt.Sprintf(`,"%s": "%s"`, "updated_at", date)
-
-	email := fmt.Sprintf(`,"%s": "%s"`, "email", user.Email)
-
-	t := ""
-	if token != "" {
-		t = fmt.Sprintf(`,"%s": "%s"`, "token", token)
-	}
-
-	r := ""
-	if token != "" {
-		r = fmt.Sprintf(`,"%s": "%s"`, "refresh_token", refresh)
-	}
-
-	s := fmt.Sprintf("{%s%s%s%s%s%s}", id, cDate, uDate, email, t, r)
-
-	// fmt.Println(s)
-
-	return s
+	returnJSONRes(res, http.StatusOK, s)
 }

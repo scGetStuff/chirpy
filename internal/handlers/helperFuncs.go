@@ -10,6 +10,13 @@ import (
 	"github.com/scGetStuff/chirpy/internal/database"
 )
 
+type userJSON struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+}
+
 func decodeJSON[T any](out *T, req *http.Request) error {
 	decoder := json.NewDecoder(req.Body)
 	err := decoder.Decode(out)
@@ -17,7 +24,7 @@ func decodeJSON[T any](out *T, req *http.Request) error {
 	return err
 }
 
-func returnJSON(res http.ResponseWriter, code int, json string) {
+func returnJSONRes(res http.ResponseWriter, code int, json string) {
 	res.Header().Set("Content-Type", "application/json; charset=utf-8")
 	res.WriteHeader(code)
 	_, err := res.Write([]byte(json))
@@ -26,7 +33,7 @@ func returnJSON(res http.ResponseWriter, code int, json string) {
 	}
 }
 
-func returnTXT(res http.ResponseWriter, code int, msg string) {
+func returnTXTRes(res http.ResponseWriter, code int, msg string) {
 	res.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(code)
 	_, err := res.Write([]byte(msg))
@@ -36,14 +43,7 @@ func returnTXT(res http.ResponseWriter, code int, msg string) {
 }
 
 func dbUserToJSON(user *database.User) string {
-	type stuff struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Email     string    `json:"email"`
-	}
-
-	wraper := stuff{
+	wraper := userJSON{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -53,8 +53,28 @@ func dbUserToJSON(user *database.User) string {
 	return structToJSON(wraper)
 }
 
-func dbChirpToJSON(chirp *database.Chirp) string {
+func dbLoginToJSON(user *database.User, token string, refresh string) string {
+	type stuff struct {
+		userJSON
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
+	}
 
+	wraper := stuff{
+		userJSON: userJSON{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			Email:     user.Email,
+		},
+		Token:        token,
+		RefreshToken: refresh,
+	}
+
+	return structToJSON(wraper)
+}
+
+func dbChirpToJSON(chirp *database.Chirp) string {
 	type stuff struct {
 		ID        uuid.UUID `json:"id"`
 		CreatedAt time.Time `json:"created_at"`
