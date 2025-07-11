@@ -96,7 +96,7 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	userID, err := auth.ValidateJWT(accessToken, cfg.Secret)
+	userID, err := auth.ValidateJWT(accessToken, cfg.JWTsecret)
 	if err != nil {
 		fmt.Println(err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")

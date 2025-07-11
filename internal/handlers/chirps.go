@@ -24,7 +24,7 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	userID, err := auth.ValidateJWT(tokenString, cfg.Secret)
+	userID, err := auth.ValidateJWT(tokenString, cfg.JWTsecret)
 	if err != nil {
 		fmt.Println(err)
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")

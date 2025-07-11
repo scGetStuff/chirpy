@@ -21,7 +21,7 @@ import (
 var FileServerHits = atomic.Int32{}
 var DBQueries *database.Queries
 var IsDev = false
-var Secret = ""
+var JWTsecret = ""
 var TokenLimit = 60 * 60 // 1 hour in seconds
 
 func DBinit() {
@@ -35,8 +35,8 @@ func DBinit() {
 	IsDev = (s == "dev")
 	fmt.Printf("IsDev: %v\n", IsDev)
 
-	Secret = os.Getenv("SECRET")
-	fmt.Printf("ENV: SECRET: %s\n", Secret)
+	JWTsecret = os.Getenv("JWT_SECRET")
+	fmt.Printf("ENV: JWT_SECRET: %s\n", JWTsecret)
 
 	dbURL := os.Getenv("DB_URL")
 	fmt.Printf("ENV: DB_URL: %s\n", dbURL)

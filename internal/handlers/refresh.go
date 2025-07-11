@@ -37,7 +37,7 @@ func Refresh(res http.ResponseWriter, req *http.Request) {
 	}
 
 	expirationTime := time.Hour
-	tokenAccess, err := auth.MakeJWT(userID, cfg.Secret, expirationTime)
+	tokenAccess, err := auth.MakeJWT(userID, cfg.JWTsecret, expirationTime)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "'MakeJWT()' failed")
 		returnJSONRes(res, http.StatusUnauthorized, s)

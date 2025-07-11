@@ -39,7 +39,7 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	expirationTime := time.Hour
-	tokenAccess, err := auth.MakeJWT(userRec.ID, cfg.Secret, expirationTime)
+	tokenAccess, err := auth.MakeJWT(userRec.ID, cfg.JWTsecret, expirationTime)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "'MakeJWT()' failed")
 		returnJSONRes(res, http.StatusInternalServerError, s)
