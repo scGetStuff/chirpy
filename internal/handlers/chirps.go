@@ -16,24 +16,13 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 		Body string `json:"body"`
 	}
 
-	tokenString, err := auth.GetBearerToken(req.Header)
-	if err != nil {
-		fmt.Printf("`GetBearerToken()` failed\n%v", err)
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSONRes(res, http.StatusUnauthorized, s)
-		return
-	}
-
-	userID, err := auth.ValidateJWT(tokenString, cfg.JWTsecret)
-	if err != nil {
-		fmt.Println(err)
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSONRes(res, http.StatusUnauthorized, s)
+	isValid, userID := validateToken(res, req)
+	if !isValid {
 		return
 	}
 
 	c := chirpRequest{}
-	err = decodeJSON(&c, req)
+	err := decodeJSON(&c, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
 		returnJSONRes(res, http.StatusInternalServerError, s)
@@ -57,6 +46,7 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 		s := fmt.Sprintf("`CreateChirp()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSONRes(res, http.StatusInternalServerError, s)
+		return
 	}
 
 	s := dbChirpToJSON(&chirp)
@@ -69,6 +59,7 @@ func GetChirps(res http.ResponseWriter, req *http.Request) {
 		s := fmt.Sprintf("`GetChirps()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSONRes(res, http.StatusInternalServerError, s)
+		return
 	}
 
 	stuff := []string{}
@@ -82,15 +73,53 @@ func GetChirps(res http.ResponseWriter, req *http.Request) {
 
 func GetChirp(res http.ResponseWriter, req *http.Request) {
 
-	chirpID := req.PathValue("chirpID")
-	// fmt.Printf("\nchirpID: %v\n", chirpID)
-
-	id, err := uuid.Parse(chirpID)
-	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "bad chirp ID")
-		returnJSONRes(res, http.StatusBadRequest, s)
+	isValid, id := validateRequestChirpID(res, req)
+	if !isValid {
 		return
 	}
+
+	isValid, chirp := getChirpRecord(res, req, id)
+	if !isValid {
+		return
+	}
+
+	s := dbChirpToJSON(&chirp)
+	returnJSONRes(res, http.StatusOK, s)
+}
+
+func DeleteChirp(res http.ResponseWriter, req *http.Request) {
+	isValid, id := validateRequestChirpID(res, req)
+	if !isValid {
+		return
+	}
+
+	isValid, userID := validateToken(res, req)
+	if !isValid {
+		return
+	}
+
+	isValid, chirp := getChirpRecord(res, req, id)
+	if !isValid {
+		return
+	}
+
+	if chirp.UserID != userID {
+		returnJSONRes(res, http.StatusForbidden, "")
+		return
+	}
+
+	err := cfg.DBQueries.DeleteChirp(req.Context(), id)
+	if err != nil {
+		s := fmt.Sprintf("`DeleteChirp()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSONRes(res, http.StatusInternalServerError, s)
+		return
+	}
+
+	returnJSONRes(res, http.StatusNoContent, "")
+}
+
+func getChirpRecord(res http.ResponseWriter, req *http.Request, id uuid.UUID) (bool, database.Chirp) {
 
 	chirp, err := cfg.DBQueries.GetChirp(req.Context(), id)
 	if err != nil {
@@ -98,16 +127,52 @@ func GetChirp(res http.ResponseWriter, req *http.Request) {
 		if err.Error() == "sql: no rows in result set" {
 			s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Couldn't get chirp")
 			returnJSONRes(res, http.StatusNotFound, s)
-			return
+			return false, chirp
 		}
 
 		s := fmt.Sprintf("`GetChirp()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSONRes(res, http.StatusInternalServerError, s)
+		return false, chirp
 	}
 
-	s := dbChirpToJSON(&chirp)
-	returnJSONRes(res, http.StatusOK, s)
+	return true, chirp
+}
+
+func validateRequestChirpID(res http.ResponseWriter, req *http.Request) (bool, uuid.UUID) {
+	chirpID := req.PathValue("chirpID")
+	// fmt.Printf("\nchirpID: %v\n", chirpID)
+
+	id, err := uuid.Parse(chirpID)
+	if err != nil {
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "bad chirp ID")
+		returnJSONRes(res, http.StatusBadRequest, s)
+		return false, id
+	}
+
+	return true, id
+}
+
+func validateToken(res http.ResponseWriter, req *http.Request) (bool, uuid.UUID) {
+	code := http.StatusUnauthorized
+
+	tokenString, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		fmt.Printf("`GetBearerToken()` failed\n%v", err)
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", http.StatusText(code))
+		returnJSONRes(res, code, s)
+		return false, uuid.Nil
+	}
+
+	userID, err := auth.ValidateJWT(tokenString, cfg.JWTsecret)
+	if err != nil {
+		fmt.Println(err)
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", http.StatusText(code))
+		returnJSONRes(res, code, s)
+		return false, uuid.Nil
+	}
+
+	return true, userID
 }
 
 func censor(str string) string {

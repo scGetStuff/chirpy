@@ -55,6 +55,7 @@ func GetRefresh(res http.ResponseWriter, req *http.Request) {
 		s := fmt.Sprintf("`GetRefreshTokens()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSONRes(res, http.StatusInternalServerError, s)
+		return
 	}
 
 	stuff := []string{}
@@ -86,6 +87,7 @@ func Revoke(res http.ResponseWriter, req *http.Request) {
 		s := fmt.Sprintf("`GetRefreshTokens()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSONRes(res, http.StatusInternalServerError, s)
+		return
 	}
 
 	res.WriteHeader(http.StatusNoContent)

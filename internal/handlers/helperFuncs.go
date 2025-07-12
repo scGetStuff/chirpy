@@ -33,7 +33,7 @@ func returnJSONRes(res http.ResponseWriter, code int, json string) {
 	}
 }
 
-func returnTXTRes(res http.ResponseWriter, code int, msg string) {
+func returnTextRes(res http.ResponseWriter, code int, msg string) {
 	res.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(code)
 	_, err := res.Write([]byte(msg))

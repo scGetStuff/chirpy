@@ -48,6 +48,7 @@ func doStuff() {
 	mux.HandleFunc("POST /api/chirps", handlers.CreateChirp)
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", handlers.GetChirp)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", handlers.DeleteChirp)
 
 	mux.HandleFunc("POST /api/refresh", handlers.Refresh)
 	mux.HandleFunc("GET /api/refresh", handlers.GetRefresh)

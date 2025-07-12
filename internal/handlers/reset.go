@@ -11,7 +11,7 @@ import (
 func Reset(res http.ResponseWriter, req *http.Request) {
 
 	if !cfg.IsDev {
-		returnTXTRes(res, 403, "Forbidden")
+		returnTextRes(res, 403, "Forbidden")
 		return
 	}
 
@@ -23,5 +23,5 @@ func Reset(res http.ResponseWriter, req *http.Request) {
 
 	cfg.FileServerHits.Store(0)
 	s := fmt.Sprintf("Reset: %d", cfg.FileServerHits.Load())
-	returnTXTRes(res, 200, s)
+	returnTextRes(res, 200, s)
 }

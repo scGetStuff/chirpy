@@ -55,6 +55,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 		s := fmt.Sprintf("`GetUsers()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSONRes(res, http.StatusInternalServerError, s)
+		return
 	}
 
 	stuff := []string{}
@@ -88,19 +89,8 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	accessToken, err := auth.GetBearerToken(req.Header)
-	if err != nil {
-		fmt.Printf("`GetBearerToken()` failed\n%v", err)
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSONRes(res, http.StatusUnauthorized, s)
-		return
-	}
-
-	userID, err := auth.ValidateJWT(accessToken, cfg.JWTsecret)
-	if err != nil {
-		fmt.Println(err)
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSONRes(res, http.StatusUnauthorized, s)
+	isValid, userID := validateToken(res, req)
+	if !isValid {
 		return
 	}
 
@@ -119,6 +109,5 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	s := dbUserToJSON(&userRec)
-
 	returnJSONRes(res, http.StatusOK, s)
 }
