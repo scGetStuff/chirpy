@@ -16,6 +16,7 @@ import (
 
 func HashPassword(password string) (string, error) {
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+
 	return string(hashPass), err
 }
 
@@ -24,7 +25,6 @@ func CheckPasswordHash(password, hash string) error {
 }
 
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.RegisteredClaims{
 			Issuer:    "chirpy",
@@ -38,7 +38,6 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 }
 
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
-
 	claimsStruct := jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(
 		tokenString,
@@ -72,47 +71,32 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	return userID, nil
 }
 
-func GetBearerToken(headers http.Header) (string, error) {
-
+func getAuthHeader(headers http.Header, prefix string) (string, error) {
 	auth := headers.Get("Authorization")
 	if auth == "" {
-		fmt.Println("'Authorization' header does not exist")
 		return "", errors.New("'Authorization' header does not exist")
 	}
 
-	token, found := strings.CutPrefix(auth, "Bearer ")
+	stuff, found := strings.CutPrefix(auth, prefix)
 	if !found {
-		fmt.Println("'Bearer ' not found in 'Authorization' header")
-		return "", errors.New("'Bearer ' not found in 'Authorization' header")
+
+		return "", fmt.Errorf("'%s' not found in 'Authorization' header", prefix)
 	}
 
-	return token, nil
+	return stuff, nil
+}
+
+func GetBearerToken(headers http.Header) (string, error) {
+	return getAuthHeader(headers, "Bearer ")
+}
+
+func GetAPIKey(headers http.Header) (string, error) {
+	return getAuthHeader(headers, "ApiKey ")
 }
 
 func MakeRefreshToken() string {
-
 	b := make([]byte, 32)
 	rand.Read(b)
 
 	return hex.EncodeToString(b)
-}
-
-// TODO: duplicate code
-func GetAPIKey(headers http.Header) (string, error) {
-	auth := headers.Get("Authorization")
-	if auth == "" {
-		fmt.Println("'Authorization' header does not exist")
-		return "", errors.New("'Authorization' header does not exist")
-	}
-
-	apiKey, found := strings.CutPrefix(auth, "ApiKey ")
-	if !found {
-		fmt.Println("'ApiKey ' not found in 'Authorization' header")
-		return "", errors.New("'ApiKey ' not found in 'Authorization' header")
-	}
-
-	fmt.Println()
-	fmt.Printf("\napiKey: '%s'\n", apiKey)
-
-	return apiKey, nil
 }

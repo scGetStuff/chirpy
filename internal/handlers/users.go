@@ -17,10 +17,8 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	reqUser := newUser{}
-	err := decodeJSON(&reqUser, req)
+	err := decodeJSON(res, req, &reqUser)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -28,7 +26,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`HashPassword()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -41,12 +39,12 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`CreateUser()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	s := dbUserToJSON(&userRec)
-	returnJSONRes(res, http.StatusCreated, s)
+	returnJSONResponse(res, http.StatusCreated, s)
 }
 
 func GetUsers(res http.ResponseWriter, req *http.Request) {
@@ -54,7 +52,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`GetUsers()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -64,7 +62,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 		stuff = append(stuff, s)
 	}
 	s := fmt.Sprintf("[%s]", strings.Join(stuff, ","))
-	returnJSONRes(res, http.StatusOK, s)
+	returnJSONResponse(res, http.StatusOK, s)
 }
 
 func PutUser(res http.ResponseWriter, req *http.Request) {
@@ -74,10 +72,8 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	reqUser := updateUser{}
-	err := decodeJSON(&reqUser, req)
+	err := decodeJSON(res, req, &reqUser)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -85,12 +81,12 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`HashPassword()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
-	isValid, userID := validateToken(res, req)
-	if !isValid {
+	userID, err := validateToken(res, req)
+	if err != nil {
 		return
 	}
 
@@ -104,10 +100,10 @@ func PutUser(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`UpdateUser()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	s := dbUserToJSON(&userRec)
-	returnJSONRes(res, http.StatusOK, s)
+	returnJSONResponse(res, http.StatusOK, s)
 }

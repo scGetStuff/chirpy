@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/scGetStuff/chirpy/internal/auth"
 	cfg "github.com/scGetStuff/chirpy/internal/config"
 	"github.com/scGetStuff/chirpy/internal/database"
 )
 
-// TODO: lesson saya request will never end untill 2xx code
-// why did it have us return a 404?
+// TODO: lesson says request will never end untill 2xx code
+// why did it have us return a 404 & 401?
 // should 500 be changed to StatusNoContent?
 func Polka(res http.ResponseWriter, req *http.Request) {
 	type polkaData struct {
@@ -22,35 +21,33 @@ func Polka(res http.ResponseWriter, req *http.Request) {
 		Data  polkaData `json:"data"`
 	}
 
-	reqKey, err := auth.GetAPIKey(req.Header)
+	reqStuff := polkaRequest{}
+	err := decodeJSON(res, req, &reqStuff)
 	if err != nil {
-		fmt.Printf("`GetAPIKey()` failed\n%v", err)
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", err.Error())
-		returnJSONRes(res, http.StatusUnauthorized, s)
 		return
 	}
-	if reqKey != cfg.PolkaKey {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "key does not match")
-		returnJSONRes(res, http.StatusUnauthorized, s)
+
+	reqKey, err := auth.GetAPIKey(req.Header)
+	if err != nil {
+		s := fmt.Sprintf("`GetAPIKey()` failed\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSONResponse(res, http.StatusUnauthorized, s)
+		return
 	}
 
-	reqStuff := polkaRequest{}
-	err = decodeJSON(&reqStuff, req)
-	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSONRes(res, http.StatusInternalServerError, s)
+	if reqKey != cfg.PolkaKey {
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "key does not match")
+		returnJSONResponse(res, http.StatusUnauthorized, s)
 		return
 	}
 
 	if reqStuff.Event != "user.upgraded" {
-		returnJSONRes(res, http.StatusNoContent, "")
+		returnJSONResponse(res, http.StatusNoContent, "")
 		return
 	}
 
-	userID, err := uuid.Parse(reqStuff.Data.UserID)
+	userID, err := parseID(res, reqStuff.Data.UserID)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "bad user_id")
-		returnJSONRes(res, http.StatusBadRequest, s)
 		return
 	}
 
@@ -63,15 +60,15 @@ func Polka(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// TODO: is there a way to do this that does not suck
 		if err.Error() == "sql: no rows in result set" {
-			returnJSONRes(res, http.StatusNotFound, "")
+			returnJSONResponse(res, http.StatusNotFound, "")
 			return
 		}
 
 		s := fmt.Sprintf("`UpdateUserRed()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
-	returnJSONRes(res, http.StatusNoContent, "")
+	returnJSONResponse(res, http.StatusNoContent, "")
 }

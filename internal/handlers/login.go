@@ -17,32 +17,33 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	reqUser := loginUser{}
-	err := decodeJSON(&reqUser, req)
+	err := decodeJSON(res, req, &reqUser)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
-		returnJSONRes(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	userRec, err := cfg.DBQueries.GetUserByEmail(req.Context(), reqUser.Email)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSONRes(res, http.StatusUnauthorized, s)
+		code := http.StatusUnauthorized
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", http.StatusText(code))
+		returnJSONResponse(res, code, s)
 		return
 	}
 
 	err = auth.CheckPasswordHash(reqUser.Password, userRec.HashedPassword)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Unauthorized")
-		returnJSONRes(res, http.StatusUnauthorized, s)
+		code := http.StatusUnauthorized
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", http.StatusText(code))
+		returnJSONResponse(res, code, s)
 		return
 	}
 
 	expirationTime := time.Hour
 	tokenAccess, err := auth.MakeJWT(userRec.ID, cfg.JWTsecret, expirationTime)
 	if err != nil {
-		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "'MakeJWT()' failed")
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		s := fmt.Sprintf("`MakeJWT()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
@@ -56,10 +57,10 @@ func Login(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s := fmt.Sprintf("`CreateRefreshToken()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
-		returnJSONRes(res, http.StatusInternalServerError, s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
 	}
 
 	s := dbLoginToJSON(&userRec, tokenAccess, tokenRefresh)
-	returnJSONRes(res, http.StatusOK, s)
+	returnJSONResponse(res, http.StatusOK, s)
 }

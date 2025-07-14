@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -18,28 +19,34 @@ type userStructForJSON struct {
 	IsRed     bool      `json:"is_chirpy_red"`
 }
 
-func decodeJSON[T any](out *T, req *http.Request) error {
+func decodeJSON[T any](res http.ResponseWriter, req *http.Request, out *T) error {
 	decoder := json.NewDecoder(req.Body)
 	err := decoder.Decode(out)
+
+	if err != nil {
+		s := fmt.Sprintf("`decodeJSON()` failed:\n%v", err)
+		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
+		returnJSONResponse(res, http.StatusInternalServerError, s)
+	}
 
 	return err
 }
 
-func returnJSONRes(res http.ResponseWriter, code int, json string) {
+func returnJSONResponse(res http.ResponseWriter, code int, json string) {
 	res.Header().Set("Content-Type", "application/json; charset=utf-8")
 	res.WriteHeader(code)
 	_, err := res.Write([]byte(json))
 	if err != nil {
-		log.Fatalf("returnJSON() failed, that is not supposed to happen, I'm going to crash now\n%v", err)
+		log.Fatalf("returnJSONResponse() failed, that is not supposed to happen, I'm going to crash now\n%v", err)
 	}
 }
 
-func returnTextRes(res http.ResponseWriter, code int, msg string) {
+func returnTextResponse(res http.ResponseWriter, code int, msg string) {
 	res.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(code)
 	_, err := res.Write([]byte(msg))
 	if err != nil {
-		log.Fatalf("returnTXT() failed, that is not supposed to happen, I'm going to crash now\n%v", err)
+		log.Fatalf("returnTextResponse() failed, that is not supposed to happen, I'm going to crash now\n%v", err)
 	}
 }
 
@@ -101,4 +108,15 @@ func structToJSON(stuff any) string {
 	}
 
 	return string(data)
+}
+
+func parseID(res http.ResponseWriter, sID string) (uuid.UUID, error) {
+	uID, err := uuid.Parse(sID)
+	if err != nil {
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "bad UUID string")
+		returnJSONResponse(res, http.StatusBadRequest, s)
+		return uID, err
+	}
+
+	return uID, nil
 }
