@@ -40,6 +40,7 @@ func doStuff() {
 
 	mux.HandleFunc("GET /api/healthz", handlers.Healthz)
 	mux.HandleFunc("POST /api/login", handlers.Login)
+	mux.HandleFunc("POST /api/polka/webhooks", handlers.Polka)
 
 	mux.HandleFunc("POST /api/users", handlers.CreateUser)
 	mux.HandleFunc("GET /api/users", handlers.GetUsers)

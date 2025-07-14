@@ -10,11 +10,12 @@ import (
 	"github.com/scGetStuff/chirpy/internal/database"
 )
 
-type userJSON struct {
+type userStructForJSON struct {
 	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	IsRed     bool      `json:"is_chirpy_red"`
 }
 
 func decodeJSON[T any](out *T, req *http.Request) error {
@@ -42,33 +43,31 @@ func returnTextRes(res http.ResponseWriter, code int, msg string) {
 	}
 }
 
-func dbUserToJSON(user *database.User) string {
-	wraper := userJSON{
+func dbUserWrapper(user *database.User) userStructForJSON {
+	return userStructForJSON{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
+		IsRed:     user.IsChirpyRed,
 	}
+}
 
-	return structToJSON(wraper)
+func dbUserToJSON(user *database.User) string {
+	return structToJSON(dbUserWrapper(user))
 }
 
 func dbLoginToJSON(user *database.User, token string, refresh string) string {
 	type stuff struct {
-		userJSON
+		userStructForJSON
 		Token        string `json:"token"`
 		RefreshToken string `json:"refresh_token"`
 	}
 
 	wraper := stuff{
-		userJSON: userJSON{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
-		},
-		Token:        token,
-		RefreshToken: refresh,
+		userStructForJSON: dbUserWrapper(user),
+		Token:             token,
+		RefreshToken:      refresh,
 	}
 
 	return structToJSON(wraper)
