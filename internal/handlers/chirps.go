@@ -53,8 +53,32 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 	returnJSONRes(res, http.StatusCreated, s)
 }
 
+func parseID(res http.ResponseWriter, sID string) (bool, uuid.UUID) {
+	uID, err := uuid.Parse(sID)
+	if err != nil {
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "bad UUID string")
+		returnJSONRes(res, http.StatusBadRequest, s)
+		return false, uID
+	}
+
+	return true, uID
+}
+
 func GetChirps(res http.ResponseWriter, req *http.Request) {
-	chirps, err := cfg.DBQueries.GetChirps(req.Context())
+
+	var chirps []database.Chirp
+	var err error
+
+	owner := req.URL.Query().Get("author_id")
+	if owner != "" {
+		isValid, userID := parseID(res, owner)
+		if !isValid {
+			return
+		}
+		chirps, err = cfg.DBQueries.GetUserChirps(req.Context(), userID)
+	} else {
+		chirps, err = cfg.DBQueries.GetChirps(req.Context())
+	}
 	if err != nil {
 		s := fmt.Sprintf("`GetChirps()` failed:\n%v", err)
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
