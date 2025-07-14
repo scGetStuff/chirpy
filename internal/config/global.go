@@ -23,6 +23,7 @@ var DBQueries *database.Queries
 var IsDev = false
 var JWTsecret = ""
 var TokenLimit = 60 * 60 // 1 hour in seconds
+var PolkaKey = ""
 
 func DBinit() {
 	err := godotenv.Load()
@@ -37,6 +38,9 @@ func DBinit() {
 
 	JWTsecret = os.Getenv("JWT_SECRET")
 	fmt.Printf("ENV: JWT_SECRET: %s\n", JWTsecret)
+
+	PolkaKey = os.Getenv("POLKA_KEY")
+	fmt.Printf("ENV: POLKA_KEY: %s\n", PolkaKey)
 
 	dbURL := os.Getenv("DB_URL")
 	fmt.Printf("ENV: DB_URL: %s\n", dbURL)

@@ -5,10 +5,14 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/scGetStuff/chirpy/internal/auth"
 	cfg "github.com/scGetStuff/chirpy/internal/config"
 	"github.com/scGetStuff/chirpy/internal/database"
 )
 
+// TODO: lesson saya request will never end untill 2xx code
+// why did it have us return a 404?
+// should 500 be changed to StatusNoContent?
 func Polka(res http.ResponseWriter, req *http.Request) {
 	type polkaData struct {
 		UserID string `json:"user_id"`
@@ -18,8 +22,20 @@ func Polka(res http.ResponseWriter, req *http.Request) {
 		Data  polkaData `json:"data"`
 	}
 
+	reqKey, err := auth.GetAPIKey(req.Header)
+	if err != nil {
+		fmt.Printf("`GetAPIKey()` failed\n%v", err)
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", err.Error())
+		returnJSONRes(res, http.StatusUnauthorized, s)
+		return
+	}
+	if reqKey != cfg.PolkaKey {
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "key does not match")
+		returnJSONRes(res, http.StatusUnauthorized, s)
+	}
+
 	reqStuff := polkaRequest{}
-	err := decodeJSON(&reqStuff, req)
+	err = decodeJSON(&reqStuff, req)
 	if err != nil {
 		s := fmt.Sprintf(`{"%s": "%s"}`, "error", "Something went wrong")
 		returnJSONRes(res, http.StatusInternalServerError, s)
