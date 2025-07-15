@@ -44,7 +44,7 @@ func doStuff() {
 
 	mux.HandleFunc("POST /api/users", handlers.CreateUser)
 	mux.HandleFunc("GET /api/users", handlers.GetUsers)
-	mux.HandleFunc("PUT /api/users", handlers.PutUser)
+	mux.HandleFunc("PUT /api/users", handlers.UpdateUser)
 
 	mux.HandleFunc("POST /api/chirps", handlers.CreateChirp)
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirps)

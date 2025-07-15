@@ -48,6 +48,13 @@ func CreateUser(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetUsers(res http.ResponseWriter, req *http.Request) {
+	if !cfg.IsDev {
+		code := http.StatusForbidden
+		s := fmt.Sprintf(`{"%s": "%s"}`, "error", http.StatusText(code))
+		returnJSONResponse(res, code, s)
+		return
+	}
+
 	userRecs, err := cfg.DBQueries.GetUsers(req.Context())
 	if err != nil {
 		s := fmt.Sprintf("`GetUsers()` failed:\n%v", err)
@@ -65,7 +72,7 @@ func GetUsers(res http.ResponseWriter, req *http.Request) {
 	returnJSONResponse(res, http.StatusOK, s)
 }
 
-func PutUser(res http.ResponseWriter, req *http.Request) {
+func UpdateUser(res http.ResponseWriter, req *http.Request) {
 	type updateUser struct {
 		Password string `json:"password"`
 		Email    string `json:"email"`
