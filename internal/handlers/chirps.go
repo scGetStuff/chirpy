@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -51,6 +52,25 @@ func CreateChirp(res http.ResponseWriter, req *http.Request) {
 	returnJSONResponse(res, http.StatusCreated, s)
 }
 
+func isDescending(req *http.Request) bool {
+	// optional param, query default is ASC
+	sortOrder := req.URL.Query().Get("sort")
+	// fmt.Printf("\nsortOrder: %s\n", sortOrder)
+
+	return strings.ToLower(sortOrder) == "desc"
+}
+
+func sortChirpsDec(a, b database.Chirp) int {
+	if a.CreatedAt.Before(b.CreatedAt) {
+		return 1
+	}
+	if a.CreatedAt.After(b.CreatedAt) {
+		return -1
+	}
+
+	return 0
+}
+
 func GetChirps(res http.ResponseWriter, req *http.Request) {
 	var chirps []database.Chirp
 	var dbErr error
@@ -70,6 +90,10 @@ func GetChirps(res http.ResponseWriter, req *http.Request) {
 		s = fmt.Sprintf(`{"%s": "%s"}`, "error", s)
 		returnJSONResponse(res, http.StatusInternalServerError, s)
 		return
+	}
+
+	if isDescending(req) {
+		slices.SortFunc(chirps, sortChirpsDec)
 	}
 
 	stuff := []string{}
