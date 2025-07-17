@@ -1,3 +1,10 @@
+# /app
+
+### GET
+
+root of the site, just a message  
+also increments a counter variable, see [metrics](#adminmetrics)
+
 # /api/users
 
 ### POST
@@ -7,14 +14,15 @@ expects JSON request body in the form of
 
 ```json
 {
-  "password": "word",
+  "password": "password",
   "email": "email@domain.com"
 }
 ```
 
 ### GET
 
-dev PLATFORM only
+dev PLATFORM only  
+returns all user records
 
 ### PUT
 
@@ -44,26 +52,35 @@ expects JSON request body in the form of
 ### GET
 
 takes optional query string `author_id`
+returns chirp records
 
 # /api/chirps/{chirpID}
 
 ### GET
 
+returns a single record for the given `chirpID`
+
 ### DELETE
+
+must be authenticated [login](#apilogin)
+delete chirp record for the given `chirpID`
 
 # /api/refresh
 
 ### POST
 
+creates a new access token for the owner of the refresh token passed in the `Authorization` header  
+one hour time out
+
 ### GET
+
+returns all refresh token records
 
 # /api/revoke
 
 ### POST
 
-# /admin/metrics
-
-### GET
+revokes the refresh token passed in the `Authorization` header
 
 # /admin/reset
 
@@ -71,6 +88,12 @@ takes optional query string `author_id`
 
 dev PLATFORM only  
 deletes everything
+
+# /admin/metrics
+
+### GET
+
+display variable that counts how many times the [app](#app) was hit
 
 # /api/healthz
 
@@ -82,3 +105,5 @@ there was a comment about add in 503, but nothing
 # /api/polka/webhooks
 
 ### POST
+
+some webhook thing

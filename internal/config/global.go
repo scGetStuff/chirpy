@@ -2,7 +2,6 @@ package config
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -32,18 +31,18 @@ func DBinit() {
 	}
 
 	s := strings.ToLower(os.Getenv("PLATFORM"))
-	fmt.Printf("ENV: PLATFORM: %s\n", s)
+	// fmt.Printf("ENV: PLATFORM: %s\n", s)
 	IsDev = (s == "dev")
-	fmt.Printf("IsDev: %v\n", IsDev)
+	// fmt.Printf("IsDev: %v\n", IsDev)
 
 	JWTsecret = os.Getenv("JWT_SECRET")
-	fmt.Printf("ENV: JWT_SECRET: %s\n", JWTsecret)
+	// fmt.Printf("ENV: JWT_SECRET: %s\n", JWTsecret)
 
 	PolkaKey = os.Getenv("POLKA_KEY")
-	fmt.Printf("ENV: POLKA_KEY: %s\n", PolkaKey)
+	// fmt.Printf("ENV: POLKA_KEY: %s\n", PolkaKey)
 
 	dbURL := os.Getenv("DB_URL")
-	fmt.Printf("ENV: DB_URL: %s\n", dbURL)
+	// fmt.Printf("ENV: DB_URL: %s\n", dbURL)
 	if dbURL == "" {
 		log.Fatal("error getting DB_URL from enviornment\n")
 	}
